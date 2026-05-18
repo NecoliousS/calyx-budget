@@ -154,7 +154,18 @@
           <div><label class="text-xs font-medium text-gray-500 mb-1 block">Description</label><input type="text" id="billDesc" class="input-reset w-full rounded-xl px-4 py-3 text-sm" placeholder="e.g. Tuition, Rent, Groceries" required></div>
           <div class="grid grid-cols-2 gap-3">
             <div><label class="text-xs font-medium text-gray-500 mb-1 block">Amount ($)</label><input type="number" id="billAmount" step="0.01" min="0.01" class="input-reset w-full rounded-xl px-4 py-3 text-sm" placeholder="0.00" required></div>
-            <div><label class="text-xs font-medium text-gray-500 mb-1 block">Due Date <span class="text-gray-400 font-normal">(optional)</span></label><input type="date" id="billDeadline" class="input-reset w-full rounded-xl px-4 py-3 text-sm"></div>
+            <div><label class="text-xs font-medium text-gray-500 mb-1 block">Due Date <span class="text-gray-400 font-normal">(optional)</span></label>
+              <div class="grid grid-cols-3 gap-1">
+                <select id="billMonth" class="input-reset w-full rounded-xl px-2 py-3 text-sm">
+                  <option value="" disabled selected>Mon</option>
+                  <option value="01">Jan</option><option value="02">Feb</option><option value="03">Mar</option><option value="04">Apr</option>
+                  <option value="05">May</option><option value="06">Jun</option><option value="07">Jul</option><option value="08">Aug</option>
+                  <option value="09">Sep</option><option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option>
+                </select>
+                <input type="number" id="billDay" min="1" max="31" class="input-reset w-full rounded-xl px-2 py-3 text-sm text-center" placeholder="Day">
+                <input type="number" id="billYear" min="2024" max="2099" class="input-reset w-full rounded-xl px-2 py-3 text-sm text-center" placeholder="Year">
+              </div>
+            </div>
           </div>
           <div class="grid grid-cols-2 gap-3">
             <div><label class="text-xs font-medium text-gray-500 mb-1 block">Category</label>
@@ -537,9 +548,18 @@
       anime({ targets: panel, translateY: '100%', opacity: 0, easing: 'easeInBack', duration: 300, complete: () => modal.classList.add('hidden') });
     };
 
+    function buildDateFromInputs() {
+      const m = document.getElementById('billMonth').value;
+      const d = document.getElementById('billDay').value;
+      const y = document.getElementById('billYear').value;
+      if (!m || !d || !y) return null;
+      const day = d.padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
     document.getElementById('billForm').addEventListener('submit', async e => {
       e.preventDefault();
-      const deadlineVal = document.getElementById('billDeadline').value || null;
+      const deadlineVal = buildDateFromInputs();
       const billTypeVal = document.getElementById('billType').value;
       state.bills.push({
         id: crypto.randomUUID(),
