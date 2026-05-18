@@ -154,7 +154,7 @@
           <div><label class="text-xs font-medium text-gray-500 mb-1 block">Description</label><input type="text" id="billDesc" class="input-reset w-full rounded-xl px-4 py-3 text-sm" placeholder="e.g. Tuition, Rent, Groceries" required></div>
           <div class="grid grid-cols-2 gap-3">
             <div><label class="text-xs font-medium text-gray-500 mb-1 block">Amount ($)</label><input type="number" id="billAmount" step="0.01" min="0.01" class="input-reset w-full rounded-xl px-4 py-3 text-sm" placeholder="0.00" required></div>
-            <div><label class="text-xs font-medium text-gray-500 mb-1 block">Due Date</label><input type="date" id="billDeadline" class="input-reset w-full rounded-xl px-4 py-3 text-sm" required></div>
+            <div><label class="text-xs font-medium text-gray-500 mb-1 block">Due Date <span class="text-gray-400 font-normal">(optional)</span></label><input type="date" id="billDeadline" class="input-reset w-full rounded-xl px-4 py-3 text-sm"></div>
           </div>
           <div class="grid grid-cols-2 gap-3">
             <div><label class="text-xs font-medium text-gray-500 mb-1 block">Category</label>
@@ -166,7 +166,10 @@
             <div><label class="text-xs font-medium text-gray-500 mb-1 block">Type</label>
               <select id="billType" class="input-reset w-full rounded-xl px-4 py-3 text-sm">
                 <option value="one-time">One-time</option>
-                <option value="subscription">Subscription (Monthly)</option>
+                <option value="subscription-daily">🔁 Daily</option>
+                <option value="subscription-weekly">🔁 Weekly</option>
+                <option value="subscription-monthly">🔁 Monthly</option>
+                <option value="subscription-yearly">🔁 Yearly</option>
               </select>
             </div>
           </div>
@@ -229,9 +232,6 @@
   </div>
 
   <script type="module">
-    // ======================
-    // NEW FIREBASE CONFIG (calyx-budget-9af8f)
-    // ======================
     const firebaseConfig = {
       apiKey: "AIzaSyDg8mv7sDBTxeqn2dPbGRCPolyyiJv0GGU",
       authDomain: "calyx-budget-9af8f.firebaseapp.com",
@@ -247,6 +247,7 @@
     const GOAL_COLORS = ['#8b5cf6','#34d399','#f472b6','#fbbf24','#60a5fa','#a3b899'];
     const EMOJIS = { food:'🍔', tuition:'🎓', hygiene:'🧼', personal:'👤', transport:'🚗', books:'📚', fun:'🎮', subscription:'🔄', other:'📦' };
     const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const FREQ_LABELS = { 'subscription-daily':'Daily', 'subscription-weekly':'Weekly', 'subscription-monthly':'Monthly', 'subscription-yearly':'Yearly' };
 
     let state = { balance: 0, bills: [], goals: [] };
     let chartInstance = null;
@@ -342,18 +343,20 @@
       return `${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
     }
 
-    function getDeadlineStatus(deadlineStr) {
-      if (!deadlineStr) return { text: 'No deadline', color: 'text-gray-500', bg: '' };
+    function getDeadlineStatus(deadlineStr, billType) {
+      const freqBadge = billType && billType.startsWith('subscription') ? `<span class="text-[10px] bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded-md font-medium ml-1">${FREQ_LABELS[billType] || 'SUB'}</span>` : '';
+      
+      if (!deadlineStr) return { text: 'No deadline' + (freqBadge ? ' • ' + freqBadge : ''), color: 'text-gray-500', bg: '', hasFreq: !!freqBadge };
       const today = new Date(); today.setHours(0,0,0,0);
       const d = new Date(deadlineStr + 'T00:00:00');
-      if (isNaN(d.getTime())) return { text: 'Invalid date', color: 'text-gray-500', bg: '' };
+      if (isNaN(d.getTime())) return { text: 'Invalid date', color: 'text-gray-500', bg: '', hasFreq: !!freqBadge };
       d.setHours(0,0,0,0);
       const diff = Math.ceil((d - today) / (1000 * 60 * 60 * 24));
       const dateText = formatDate(deadlineStr);
-      if (diff < 0) return { text: `Overdue • ${dateText}`, color: 'text-red-500', bg: 'bg-red-50' };
-      if (diff === 0) return { text: `Due today • ${dateText}`, color: 'text-orange-600', bg: 'bg-orange-50' };
-      if (diff <= 3) return { text: `Due in ${diff} days • ${dateText}`, color: 'text-orange-500', bg: 'bg-orange-50' };
-      return { text: dateText, color: 'text-gray-500', bg: '' };
+      if (diff < 0) return { text: `Overdue • ${dateText}${freqBadge ? ' • ' + freqBadge : ''}`, color: 'text-red-500', bg: 'bg-red-50', hasFreq: !!freqBadge };
+      if (diff === 0) return { text: `Due today • ${dateText}${freqBadge ? ' • ' + freqBadge : ''}`, color: 'text-orange-600', bg: 'bg-orange-50', hasFreq: !!freqBadge };
+      if (diff <= 3) return { text: `Due in ${diff} days • ${dateText}${freqBadge ? ' • ' + freqBadge : ''}`, color: 'text-orange-500', bg: 'bg-orange-50', hasFreq: !!freqBadge };
+      return { text: dateText + (freqBadge ? ' • ' + freqBadge : ''), color: 'text-gray-500', bg: '', hasFreq: !!freqBadge };
     }
 
     function render(animate = true) {
@@ -442,8 +445,8 @@
     function renderBills() {
       const list = document.getElementById('transactionList');
       const sorted = [...state.bills].sort((a, b) => {
-        const da = a.deadline ? new Date(a.deadline + 'T00:00:00') : new Date('2099-01-01');
-        const db = b.deadline ? new Date(b.deadline + 'T00:00:00') : new Date('2099-01-01');
+        const da = a.deadline ? new Date(a.deadline + 'T00:00:00').getTime() : Infinity;
+        const db = b.deadline ? new Date(b.deadline + 'T00:00:00').getTime() : Infinity;
         return da - db;
       });
 
@@ -453,8 +456,8 @@
       }
 
       list.innerHTML = sorted.map(b => {
-        const ds = getDeadlineStatus(b.deadline);
-        const subBadge = b.billType === 'subscription' ? '<span class="text-[10px] bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded-md font-medium ml-1">SUB</span>' : '';
+        const ds = getDeadlineStatus(b.deadline, b.billType);
+        const subBadge = b.billType && b.billType.startsWith('subscription') ? `<span class="text-[10px] bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded-md font-medium ml-1">${FREQ_LABELS[b.billType] || 'SUB'}</span>` : '';
         return `
         <div class="flex items-center justify-between p-3 bg-white rounded-2xl shadow-sm border border-gray-100 group ${ds.bg}">
           <div class="flex items-center gap-3">
@@ -536,14 +539,14 @@
 
     document.getElementById('billForm').addEventListener('submit', async e => {
       e.preventDefault();
-      const deadlineVal = document.getElementById('billDeadline').value;
-      if (!deadlineVal) { alert('Please select a due date'); return; }
+      const deadlineVal = document.getElementById('billDeadline').value || null;
+      const billTypeVal = document.getElementById('billType').value;
       state.bills.push({
         id: crypto.randomUUID(),
         desc: document.getElementById('billDesc').value,
         amount: parseFloat(document.getElementById('billAmount').value),
         category: document.getElementById('billCat').value,
-        billType: document.getElementById('billType').value,
+        billType: billTypeVal,
         deadline: deadlineVal,
         timestamp: Date.now()
       });
