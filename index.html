@@ -29,7 +29,6 @@
     .balance-btn:hover { transform: translateY(-2px); }
     .balance-btn.selected { border-color: #7c3aed; background: #f3f0ff; }
 
-    /* Dark Mode Overrides */
     [data-theme="dark"] body { background: #0b0b14; color: #e5e7eb; }
     [data-theme="dark"] .glass { background: rgba(23, 22, 35, 0.9); border-color: rgba(255,255,255,0.06); box-shadow: 0 4px 24px rgba(0,0,0,0.2); }
     [data-theme="dark"] header.glass { background: rgba(23, 22, 35, 0.95); }
@@ -259,7 +258,6 @@
           <h3 class="text-lg font-bold text-gray-900" id="balanceModalTitle">Edit Balance</h3>
           <button onclick="closeModal('balanceModal')" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">✕</button>
         </div>
-
         <div id="balanceActions" class="grid grid-cols-3 gap-2 mb-4 hidden">
           <button type="button" onclick="setBalanceAction('new')" id="btnNew" class="balance-btn bg-gray-100 rounded-xl p-3 text-center">
             <div class="text-lg mb-1">🔄</div>
@@ -274,7 +272,6 @@
             <div class="text-xs font-medium text-gray-700">Subtract</div>
           </button>
         </div>
-
         <form id="balanceForm" class="space-y-4">
           <div id="balanceInputContainer">
             <label class="text-xs font-medium text-gray-500 mb-1 block" id="balanceLabel">Amount ($)</label>
@@ -348,7 +345,6 @@
     let authInstance = null;
     let balanceAction = 'new';
 
-    // Theme
     window.toggleTheme = function() {
       const current = document.documentElement.getAttribute('data-theme');
       const next = current === 'dark' ? 'light' : 'dark';
@@ -375,7 +371,6 @@
       if (raw) {
         try {
           state = { balance: 0, bills: [], goals: [], ...JSON.parse(raw) };
-          // Migrate legacy deadline format to partial fields
           state.bills.forEach(b => {
             if (b.deadline && !b.dueMonth && !b.dueDay && !b.dueYear) {
               const parts = b.deadline.split('-');
@@ -412,7 +407,6 @@
             if (snap.exists()) {
               const data = snap.data();
               state = { balance: data.balance || 0, bills: data.bills || [], goals: data.goals || [] };
-              // Migrate on load from cloud too
               state.bills.forEach(b => {
                 if (b.deadline && !b.dueMonth && !b.dueDay && !b.dueYear) {
                   const parts = b.deadline.split('-');
@@ -508,7 +502,6 @@
     function getSortTime(bill) {
       const today = new Date();
       today.setHours(0,0,0,0);
-      // Legacy full date
       if (bill.deadline && !bill.dueMonth && !bill.dueDay && !bill.dueYear) {
         const t = new Date(bill.deadline + 'T00:00:00').getTime();
         return isNaN(t) ? Infinity : t;
@@ -890,7 +883,6 @@
       render();
     });
 
-    // SPREADSHEET EXPORT
     window.exportToSpreadsheet = function() {
       const totalBills = state.bills.reduce((s, b) => s + b.amount, 0);
       const totalGoalsSaved = state.goals.reduce((s, g) => s + g.saved, 0);
@@ -972,21 +964,20 @@
       URL.revokeObjectURL(url);
     };
 
-    window.addEventListener('DOMContentLoaded', async () => {
+    // INIT — runs immediately since module is at end of body (DOM ready)
+    (async function init() {
+      loadLocal();
       try {
         await initFirebase();
       } catch(err) {
         console.error('Firebase init failed:', err);
-        loadLocal();
         showSyncStatus(false);
       }
-
       render();
-
       if (state.balance === 0 && state.bills.length === 0 && state.goals.length === 0) {
         setTimeout(() => openBalanceModal(), 900);
       }
-    });
+    })();
   </script>
 </body>
 </html>
