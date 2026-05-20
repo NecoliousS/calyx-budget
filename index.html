@@ -345,6 +345,7 @@
     let authInstance = null;
     let balanceAction = 'new';
 
+    // ========== EXPOSE ALL FUNCTIONS TO WINDOW FOR onclick HANDLERS ==========
     window.toggleTheme = function() {
       const current = document.documentElement.getAttribute('data-theme');
       const next = current === 'dark' ? 'light' : 'dark';
@@ -353,6 +354,168 @@
       updateThemeIcon();
       renderDonut();
     };
+
+    window.openModal = function(id) {
+      const modal = document.getElementById(id);
+      const panel = modal.querySelector('.modal-panel');
+      modal.classList.remove('hidden');
+      anime({ targets: panel, translateY: ['100%', '0%'], opacity: [0, 1], easing: 'easeOutBack', duration: 400 });
+    };
+
+    window.closeModal = function(id) {
+      const modal = document.getElementById(id);
+      const panel = modal.querySelector('.modal-panel');
+      anime({ targets: panel, translateY: '100%', opacity: 0, easing: 'easeInBack', duration: 300, complete: () => modal.classList.add('hidden') });
+    };
+
+    window.openBalanceModal = function() {
+      const isFirstTime = state.balance === 0;
+      const actionsDiv = document.getElementById('balanceActions');
+      const title = document.getElementById('balanceModalTitle');
+      const hint = document.getElementById('currentBalanceHint');
+
+      if (isFirstTime) {
+        title.textContent = 'Set Your Balance';
+        actionsDiv.classList.add('hidden');
+        document.getElementById('balanceLabel').textContent = 'Starting Balance ($)';
+        document.getElementById('balanceSubmitBtn').textContent = 'Set Balance';
+        hint.textContent = 'Enter your current account balance';
+      } else {
+        title.textContent = 'Edit Balance';
+        actionsDiv.classList.remove('hidden');
+        setBalanceAction(balanceAction);
+      }
+
+      document.getElementById('balanceInput').value = '';
+      openModal('balanceModal');
+    };
+
+    window.setBalanceAction = function(action) {
+      balanceAction = action;
+      document.querySelectorAll('.balance-btn').forEach(btn => btn.classList.remove('selected'));
+      document.getElementById('btn' + action.charAt(0).toUpperCase() + action.slice(1)).classList.add('selected');
+
+      const label = document.getElementById('balanceLabel');
+      const hint = document.getElementById('currentBalanceHint');
+      const btn = document.getElementById('balanceSubmitBtn');
+
+      if (action === 'new') {
+        label.textContent = 'New Balance ($)';
+        hint.textContent = `Current: $${state.balance.toFixed(2)}`;
+        btn.textContent = 'Set New Balance';
+      } else if (action === 'add') {
+        label.textContent = 'Amount to Add ($)';
+        hint.textContent = `Current: $${state.balance.toFixed(2)}`;
+        btn.textContent = 'Add to Balance';
+      } else if (action === 'subtract') {
+        label.textContent = 'Amount to Remove ($)';
+        hint.textContent = `Current: $${state.balance.toFixed(2)}`;
+        btn.textContent = 'Subtract from Balance';
+      }
+    };
+
+    window.openContribute = function(id) {
+      const g = state.goals.find(x => x.id === id);
+      if (!g || g.saved >= g.target) return;
+      document.getElementById('contributeGoalId').value = id;
+      document.getElementById('contributeGoalName').textContent = g.name;
+      const totalBills = state.bills.reduce((s, b) => s + b.amount, 0);
+      const totalGoalsSaved = state.goals.reduce((s, g) => s + g.saved, 0);
+      const freeCash = (state.balance - totalBills) - totalGoalsSaved;
+      document.getElementById('contributeHint').textContent = `Available surplus: $${Math.max(0, freeCash).toFixed(2)}`;
+      document.getElementById('contributeAmount').value = '';
+      openModal('contributeModal');
+    };
+
+    window.deleteBill = async function(id) {
+      if (!confirm('Delete this bill?')) return;
+      state.bills = state.bills.filter(b => b.id !== id);
+      await pushToCloud();
+      render();
+    };
+
+    window.deleteGoal = async function(id) {
+      if (!confirm('Delete this goal? Saved money returns to surplus.')) return;
+      state.goals = state.goals.filter(g => g.id !== id);
+      await pushToCloud();
+      render();
+    };
+
+    window.signInWithGoogle = async function() {
+      if (!googleProvider || !authInstance) {
+        alert('Firebase not ready yet. Wait a second and try again.');
+        return;
+      }
+      const { signInWithPopup } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
+      try {
+        await signInWithPopup(authInstance, googleProvider);
+      } catch (err) {
+        console.error('Sign in error:', err);
+        let msg = err.message;
+        if (err.code === 'auth/api-key-not-valid') msg = 'API key invalid. Double-check your Firebase project.';
+        if (err.code === 'auth/unauthorized-domain') msg = 'This domain is not authorized. Add it in Firebase Auth settings.';
+        alert('Sign in failed: ' + msg);
+      }
+    };
+
+    window.exportToSpreadsheet = function() {
+      const totalBills = state.bills.reduce((s, b) => s + b.amount, 0);
+      const totalGoalsSaved = state.goals.reduce((s, g) => s + g.saved, 0);
+      const surplus = state.balance - totalBills;
+      const freeCash = surplus - totalGoalsSaved;
+      const totalGoalTarget = state.goals.reduce((s, g) => s + g.target, 0);
+      const goalPct = totalGoalTarget > 0 ? Math.round((totalGoalsSaved / totalGoalTarget) * 100) : 0;
+
+      let csv = 'Calyx Budget Export\n';
+      csv += `Generated,${new Date().toLocaleString()}\n\n`;
+
+      csv += 'SUMMARY\n';
+      csv += 'Metric,Amount\n';
+      csv += `Total Balance,$${state.balance.toFixed(2)}\n`;
+      csv += `Total Bills,$${totalBills.toFixed(2)}\n`;
+      csv += `Surplus,$${surplus.toFixed(2)}\n`;
+      csv += `Free Cash,$${freeCash.toFixed(2)}\n`;
+      csv += `Bills Count,${state.bills.length}\n`;
+      csv += `Goals Count,${state.goals.length}\n`;
+      csv += `Goal Progress,${goalPct}%\n\n`;
+
+      csv += 'BILLS\n';
+      csv += 'Description,Amount,Category,Type,Deadline\n';
+      state.bills.forEach(b => {
+        const deadline = b.deadline ? formatDate(b.deadline) : (getFlexibleDateDisplay(b) || 'No deadline');
+        const type = b.billType && b.billType.startsWith('subscription') ? FREQ_LABELS[b.billType] || 'Subscription' : 'One-time';
+        csv += `"${b.desc}",$${b.amount.toFixed(2)},${CAT_LABELS[b.category] || b.category},${type},${deadline}\n`;
+      });
+      csv += '\n';
+
+      csv += 'GOALS\n';
+      csv += 'Name,Target,Saved,Progress\n';
+      state.goals.forEach(g => {
+        const pct = Math.round((g.saved / g.target) * 100);
+        csv += `"${g.name}",$${g.target.toFixed(2)},$${g.saved.toFixed(2)},${pct}%\n`;
+      });
+      csv += '\n';
+
+      csv += 'CATEGORY BREAKDOWN\n';
+      csv += 'Category,Amount\n';
+      const cats = {};
+      state.bills.forEach(b => { cats[b.category] = (cats[b.category] || 0) + b.amount; });
+      Object.keys(cats).forEach(c => {
+        csv += `${CAT_LABELS[c] || c},$${cats[c].toFixed(2)}\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Calyx_Budget_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    };
+    // ========== END WINDOW EXPORTS ==========
+
     function updateThemeIcon() {
       const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
       document.getElementById('themeIcon').textContent = isDark ? '☀️' : '🌙';
@@ -428,23 +591,6 @@
         }
       });
     }
-
-    window.signInWithGoogle = async function() {
-      if (!googleProvider || !authInstance) {
-        alert('Firebase not ready yet. Wait a second and try again.');
-        return;
-      }
-      const { signInWithPopup } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
-      try {
-        await signInWithPopup(authInstance, googleProvider);
-      } catch (err) {
-        console.error('Sign in error:', err);
-        let msg = err.message;
-        if (err.code === 'auth/api-key-not-valid') msg = 'API key invalid. Double-check your Firebase project.';
-        if (err.code === 'auth/unauthorized-domain') msg = 'This domain is not authorized. Add it in Firebase Auth settings.';
-        alert('Sign in failed: ' + msg);
-      }
-    };
 
     function showSyncStatus(connected) {
       const dot = document.getElementById('syncDot');
@@ -688,13 +834,6 @@
 
     function escapeHtml(text) { const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
 
-    window.deleteBill = async function(id) {
-      if (!confirm('Delete this bill?')) return;
-      state.bills = state.bills.filter(b => b.id !== id);
-      await pushToCloud();
-      render();
-    };
-
     function renderGoals(freeCash) {
       const grid = document.getElementById('goalsGrid');
       if (state.goals.length === 0) { grid.innerHTML = `<div class="col-span-full text-center py-6 text-gray-400 text-sm border-2 border-dashed border-gray-200 rounded-2xl">No savings goals yet. Create one to start stashing cash.</div>`; return; }
@@ -713,84 +852,6 @@
         </div>`;
       }).join('');
     }
-
-    window.deleteGoal = async function(id) {
-      if (!confirm('Delete this goal? Saved money returns to surplus.')) return;
-      state.goals = state.goals.filter(g => g.id !== id);
-      await pushToCloud();
-      render();
-    };
-
-    window.openContribute = function(id) {
-      const g = state.goals.find(x => x.id === id);
-      if (!g || g.saved >= g.target) return;
-      document.getElementById('contributeGoalId').value = id;
-      document.getElementById('contributeGoalName').textContent = g.name;
-      const totalBills = state.bills.reduce((s, b) => s + b.amount, 0);
-      const totalGoalsSaved = state.goals.reduce((s, g) => s + g.saved, 0);
-      const freeCash = (state.balance - totalBills) - totalGoalsSaved;
-      document.getElementById('contributeHint').textContent = `Available surplus: $${Math.max(0, freeCash).toFixed(2)}`;
-      document.getElementById('contributeAmount').value = '';
-      openModal('contributeModal');
-    };
-
-    window.openModal = function(id) {
-      const modal = document.getElementById(id);
-      const panel = modal.querySelector('.modal-panel');
-      modal.classList.remove('hidden');
-      anime({ targets: panel, translateY: ['100%', '0%'], opacity: [0, 1], easing: 'easeOutBack', duration: 400 });
-    };
-    window.closeModal = function(id) {
-      const modal = document.getElementById(id);
-      const panel = modal.querySelector('.modal-panel');
-      anime({ targets: panel, translateY: '100%', opacity: 0, easing: 'easeInBack', duration: 300, complete: () => modal.classList.add('hidden') });
-    };
-
-    window.setBalanceAction = function(action) {
-      balanceAction = action;
-      document.querySelectorAll('.balance-btn').forEach(btn => btn.classList.remove('selected'));
-      document.getElementById('btn' + action.charAt(0).toUpperCase() + action.slice(1)).classList.add('selected');
-
-      const label = document.getElementById('balanceLabel');
-      const hint = document.getElementById('currentBalanceHint');
-      const btn = document.getElementById('balanceSubmitBtn');
-
-      if (action === 'new') {
-        label.textContent = 'New Balance ($)';
-        hint.textContent = `Current: $${state.balance.toFixed(2)}`;
-        btn.textContent = 'Set New Balance';
-      } else if (action === 'add') {
-        label.textContent = 'Amount to Add ($)';
-        hint.textContent = `Current: $${state.balance.toFixed(2)}`;
-        btn.textContent = 'Add to Balance';
-      } else if (action === 'subtract') {
-        label.textContent = 'Amount to Remove ($)';
-        hint.textContent = `Current: $${state.balance.toFixed(2)}`;
-        btn.textContent = 'Subtract from Balance';
-      }
-    };
-
-    window.openBalanceModal = function() {
-      const isFirstTime = state.balance === 0;
-      const actionsDiv = document.getElementById('balanceActions');
-      const title = document.getElementById('balanceModalTitle');
-      const hint = document.getElementById('currentBalanceHint');
-
-      if (isFirstTime) {
-        title.textContent = 'Set Your Balance';
-        actionsDiv.classList.add('hidden');
-        document.getElementById('balanceLabel').textContent = 'Starting Balance ($)';
-        document.getElementById('balanceSubmitBtn').textContent = 'Set Balance';
-        hint.textContent = 'Enter your current account balance';
-      } else {
-        title.textContent = 'Edit Balance';
-        actionsDiv.classList.remove('hidden');
-        setBalanceAction(balanceAction);
-      }
-
-      document.getElementById('balanceInput').value = '';
-      openModal('balanceModal');
-    };
 
     document.getElementById('balanceForm').addEventListener('submit', async e => {
       e.preventDefault();
@@ -882,87 +943,6 @@
       e.target.reset();
       render();
     });
-
-    window.exportToSpreadsheet = function() {
-      const totalBills = state.bills.reduce((s, b) => s + b.amount, 0);
-      const totalGoalsSaved = state.goals.reduce((s, g) => s + g.saved, 0);
-      const surplus = state.balance - totalBills;
-      const freeCash = surplus - totalGoalsSaved;
-      const totalGoalTarget = state.goals.reduce((s, g) => s + g.target, 0);
-      const goalPct = totalGoalTarget > 0 ? Math.round((totalGoalsSaved / totalGoalTarget) * 100) : 0;
-
-      let csv = 'Calyx Budget Export
-';
-      csv += `Generated,${new Date().toLocaleString()}
-
-`;
-
-      csv += 'SUMMARY
-';
-      csv += 'Metric,Amount
-';
-      csv += `Total Balance,$${state.balance.toFixed(2)}
-`;
-      csv += `Total Bills,$${totalBills.toFixed(2)}
-`;
-      csv += `Surplus,$${surplus.toFixed(2)}
-`;
-      csv += `Free Cash,$${freeCash.toFixed(2)}
-`;
-      csv += `Bills Count,${state.bills.length}
-`;
-      csv += `Goals Count,${state.goals.length}
-`;
-      csv += `Goal Progress,${goalPct}%
-
-`;
-
-      csv += 'BILLS
-';
-      csv += 'Description,Amount,Category,Type,Deadline
-';
-      state.bills.forEach(b => {
-        const deadline = b.deadline ? formatDate(b.deadline) : (getFlexibleDateDisplay(b) || 'No deadline');
-        const type = b.billType && b.billType.startsWith('subscription') ? FREQ_LABELS[b.billType] || 'Subscription' : 'One-time';
-        csv += `"${b.desc}",$${b.amount.toFixed(2)},${CAT_LABELS[b.category] || b.category},${type},${deadline}
-`;
-      });
-      csv += '
-';
-
-      csv += 'GOALS
-';
-      csv += 'Name,Target,Saved,Progress
-';
-      state.goals.forEach(g => {
-        const pct = Math.round((g.saved / g.target) * 100);
-        csv += `"${g.name}",$${g.target.toFixed(2)},$${g.saved.toFixed(2)},${pct}%
-`;
-      });
-      csv += '
-';
-
-      csv += 'CATEGORY BREAKDOWN
-';
-      csv += 'Category,Amount
-';
-      const cats = {};
-      state.bills.forEach(b => { cats[b.category] = (cats[b.category] || 0) + b.amount; });
-      Object.keys(cats).forEach(c => {
-        csv += `${CAT_LABELS[c] || c},$${cats[c].toFixed(2)}
-`;
-      });
-
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `Calyx_Budget_${new Date().toISOString().split('T')[0]}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    };
 
     // INIT — runs immediately since module is at end of body (DOM ready)
     (async function init() {
