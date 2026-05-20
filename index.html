@@ -185,12 +185,52 @@
       </div>
     </div>
 
-    <div class="glass rounded-3xl p-5 card-anim">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="font-semibold text-gray-700 text-sm uppercase tracking-wide">Savings Goals</h2>
-        <button onclick="openModal('goalModal')" class="bg-gray-900 text-white px-4 py-2 rounded-full text-xs font-medium btn-press">+ Create Goal</button>
+    <!-- Bottom Row: Calculator | Goals | Notepad -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+      <!-- Calculator -->
+      <div class="lg:col-span-3 glass rounded-3xl p-5 card-anim flex flex-col">
+        <h2 class="font-semibold text-gray-700 text-sm uppercase tracking-wide mb-4">Calc</h2>
+        <div class="bg-white rounded-2xl p-3 shadow-sm mb-3">
+          <div id="calcDisplay" class="text-right text-xl font-bold text-gray-900 truncate px-2 py-1">0</div>
+        </div>
+        <div class="grid grid-cols-4 gap-1.5 flex-1">
+          <button onclick="appendCalc('7')" class="bg-gray-100 rounded-xl py-3 text-sm font-semibold text-gray-700 btn-press">7</button>
+          <button onclick="appendCalc('8')" class="bg-gray-100 rounded-xl py-3 text-sm font-semibold text-gray-700 btn-press">8</button>
+          <button onclick="appendCalc('9')" class="bg-gray-100 rounded-xl py-3 text-sm font-semibold text-gray-700 btn-press">9</button>
+          <button onclick="appendCalc('/')" class="bg-gray-100 rounded-xl py-3 text-sm font-semibold text-purple-600 btn-press">÷</button>
+
+          <button onclick="appendCalc('4')" class="bg-gray-100 rounded-xl py-3 text-sm font-semibold text-gray-700 btn-press">4</button>
+          <button onclick="appendCalc('5')" class="bg-gray-100 rounded-xl py-3 text-sm font-semibold text-gray-700 btn-press">5</button>
+          <button onclick="appendCalc('6')" class="bg-gray-100 rounded-xl py-3 text-sm font-semibold text-gray-700 btn-press">6</button>
+          <button onclick="appendCalc('*')" class="bg-gray-100 rounded-xl py-3 text-sm font-semibold text-purple-600 btn-press">×</button>
+
+          <button onclick="appendCalc('1')" class="bg-gray-100 rounded-xl py-3 text-sm font-semibold text-gray-700 btn-press">1</button>
+          <button onclick="appendCalc('2')" class="bg-gray-100 rounded-xl py-3 text-sm font-semibold text-gray-700 btn-press">2</button>
+          <button onclick="appendCalc('3')" class="bg-gray-100 rounded-xl py-3 text-sm font-semibold text-gray-700 btn-press">3</button>
+          <button onclick="appendCalc('-')" class="bg-gray-100 rounded-xl py-3 text-sm font-semibold text-purple-600 btn-press">−</button>
+
+          <button onclick="clearCalc()" class="bg-red-50 text-red-500 rounded-xl py-3 text-sm font-semibold btn-press">C</button>
+          <button onclick="appendCalc('0')" class="bg-gray-100 rounded-xl py-3 text-sm font-semibold text-gray-700 btn-press">0</button>
+          <button onclick="calcResult()" class="bg-gray-900 text-white rounded-xl py-3 text-sm font-semibold btn-press">=</button>
+          <button onclick="appendCalc('+')" class="bg-gray-100 rounded-xl py-3 text-sm font-semibold text-purple-600 btn-press">+</button>
+        </div>
+        <button onclick="calcBackspace()" class="w-full mt-1.5 bg-gray-100 rounded-xl py-2 text-xs font-medium text-gray-600 btn-press">⌫ Backspace</button>
       </div>
-      <div id="goalsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3"></div>
+
+      <!-- Savings Goals -->
+      <div class="lg:col-span-6 glass rounded-3xl p-5 card-anim flex flex-col">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="font-semibold text-gray-700 text-sm uppercase tracking-wide">Savings Goals</h2>
+          <button onclick="openModal('goalModal')" class="bg-gray-900 text-white px-4 py-2 rounded-full text-xs font-medium btn-press">+ Create Goal</button>
+        </div>
+        <div id="goalsGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+      </div>
+
+      <!-- Notepad -->
+      <div class="lg:col-span-3 glass rounded-3xl p-5 card-anim flex flex-col">
+        <h2 class="font-semibold text-gray-700 text-sm uppercase tracking-wide mb-4">Notes</h2>
+        <textarea id="notesArea" class="input-reset w-full flex-1 rounded-xl p-3 text-sm resize-none min-h-[200px]" placeholder="Type your notes here..." oninput="saveNotes()"></textarea>
+      </div>
     </div>
 
   </main>
@@ -321,6 +361,26 @@
     </div>
   </div>
 
+  <!-- Withdraw Modal -->
+  <div id="withdrawModal" class="fixed inset-0 z-50 hidden modal">
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeModal('withdrawModal')"></div>
+    <div class="absolute inset-0 flex items-end sm:items-center justify-center p-4 pointer-events-none">
+      <div class="modal-panel bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl pointer-events-auto transform translate-y-full opacity-0">
+        <div class="flex justify-between items-center mb-5">
+          <h3 class="text-lg font-bold text-gray-900">Withdraw from Goal</h3>
+          <button onclick="closeModal('withdrawModal')" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">✕</button>
+        </div>
+        <form id="withdrawForm" class="space-y-4">
+          <input type="hidden" id="withdrawGoalId">
+          <div class="bg-purple-50 rounded-xl p-3 mb-2"><p class="text-xs text-purple-600 mb-1">Goal</p><p class="font-semibold text-gray-900" id="withdrawGoalName">--</p></div>
+          <div><label class="text-xs font-medium text-gray-500 mb-1 block">Amount to Withdraw ($)</label><input type="number" id="withdrawAmount" step="0.01" min="0.01" class="input-reset w-full rounded-xl px-4 py-3 text-sm" placeholder="0.00" required></div>
+          <p class="text-xs text-gray-400" id="withdrawHint">Available in goal: $0</p>
+          <button type="submit" class="w-full bg-gray-900 text-white font-medium py-3 rounded-xl btn-press">Withdraw Money</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <script type="module">
     const firebaseConfig = {
       apiKey: "AIzaSyDg8mv7sDBTxeqn2dPbGRCPolyyiJv0GGU",
@@ -339,12 +399,13 @@
     const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     const FREQ_LABELS = { 'subscription-daily':'Daily', 'subscription-weekly':'Weekly', 'subscription-monthly':'Monthly', 'subscription-yearly':'Yearly' };
 
-    let state = { balance: 0, bills: [], goals: [] };
+    let state = { balance: 0, bills: [], goals: [], notes: '' };
     let chartInstance = null;
     let db = null, userId = null, setDocFn = null, docFn = null;
     let googleProvider = null;
     let authInstance = null;
     let balanceAction = 'new';
+    let calcDisplay = '0';
 
     // ========== EXPOSE ALL FUNCTIONS TO WINDOW FOR onclick HANDLERS ==========
     window.toggleTheme = function() {
@@ -426,6 +487,16 @@
       document.getElementById('contributeHint').textContent = `Available surplus: $${Math.max(0, freeCash).toFixed(2)}`;
       document.getElementById('contributeAmount').value = '';
       openModal('contributeModal');
+    };
+
+    window.openWithdraw = function(id) {
+      const g = state.goals.find(x => x.id === id);
+      if (!g || g.saved <= 0) return;
+      document.getElementById('withdrawGoalId').value = id;
+      document.getElementById('withdrawGoalName').textContent = g.name;
+      document.getElementById('withdrawHint').textContent = `Available in goal: $${g.saved.toFixed(2)}`;
+      document.getElementById('withdrawAmount').value = '';
+      openModal('withdrawModal');
     };
 
     window.deleteBill = async function(id) {
@@ -525,6 +596,42 @@
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     };
+
+    // Calculator functions
+    window.appendCalc = function(val) {
+      if (calcDisplay === '0' && val !== '.') calcDisplay = '';
+      if (calcDisplay === 'Error') calcDisplay = '';
+      calcDisplay += val;
+      document.getElementById('calcDisplay').textContent = calcDisplay;
+    };
+
+    window.clearCalc = function() {
+      calcDisplay = '0';
+      document.getElementById('calcDisplay').textContent = '0';
+    };
+
+    window.calcBackspace = function() {
+      calcDisplay = calcDisplay.slice(0, -1) || '0';
+      document.getElementById('calcDisplay').textContent = calcDisplay;
+    };
+
+    window.calcResult = function() {
+      try {
+        const clean = calcDisplay.replace(/[^0-9+\-*/.()]/g, '');
+        if (!clean) return;
+        const result = Function('"use strict"; return (' + clean + ')')();
+        calcDisplay = String(parseFloat(result.toFixed(2)));
+        document.getElementById('calcDisplay').textContent = calcDisplay;
+      } catch (e) {
+        calcDisplay = 'Error';
+        document.getElementById('calcDisplay').textContent = 'Error';
+      }
+    };
+
+    window.saveNotes = function() {
+      state.notes = document.getElementById('notesArea').value;
+      pushToCloud();
+    };
     // ========== END WINDOW EXPORTS ==========
 
     function updateThemeIcon() {
@@ -544,7 +651,7 @@
       const raw = localStorage.getItem('calyx_budget_v2');
       if (raw) {
         try {
-          state = { balance: 0, bills: [], goals: [], ...JSON.parse(raw) };
+          state = { balance: 0, bills: [], goals: [], notes: '', ...JSON.parse(raw) };
           state.bills.forEach(b => {
             if (b.deadline && !b.dueMonth && !b.dueDay && !b.dueYear) {
               const parts = b.deadline.split('-');
@@ -581,7 +688,7 @@
           onSnapshot(doc(db, 'users', userId), snap => {
             if (snap.exists()) {
               const data = snap.data();
-              state = { balance: data.balance || 0, bills: data.bills || [], goals: data.goals || [] };
+              state = { balance: data.balance || 0, bills: data.bills || [], goals: data.goals || [], notes: data.notes || '' };
               state.bills.forEach(b => {
                 if (b.deadline && !b.dueMonth && !b.dueDay && !b.dueYear) {
                   const parts = b.deadline.split('-');
@@ -755,6 +862,8 @@
       document.getElementById('goalProgressText').textContent = Math.round(goalPct) + '%';
       document.getElementById('goalProgressBar').style.width = goalPct + '%';
 
+      document.getElementById('notesArea').value = state.notes || '';
+
       renderDonut();
       renderBills();
       renderGoals(freeCash);
@@ -861,7 +970,10 @@
           <div class="flex items-center gap-2 mb-3"><div class="w-3 h-3 rounded-full" style="background:${color}"></div><h3 class="font-semibold text-gray-800 text-sm truncate pr-4">${escapeHtml(g.name)}</h3>${complete ? '<span class="text-[10px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-md font-medium">DONE</span>' : ''}</div>
           <div class="flex justify-between items-end mb-2"><div><p class="text-[10px] text-gray-500">Saved</p><p class="text-lg font-bold text-gray-900">$${g.saved.toFixed(0)}</p></div><div class="text-right"><p class="text-[10px] text-gray-500">Target</p><p class="text-sm font-medium text-gray-600">$${g.target.toFixed(0)}</p></div></div>
           <div class="h-2 bg-gray-100 rounded-full overflow-hidden mb-3"><div class="h-full rounded-full transition-all duration-700" style="width:${pct}%; background:${color}"></div></div>
-          <button onclick="openContribute('${g.id}')" class="w-full py-2 rounded-xl text-xs font-medium text-white btn-press ${complete ? 'bg-gray-300 cursor-not-allowed' : ''}" style="background:${complete ? '#d1d5db' : color}" ${complete ? 'disabled' : ''}>${complete ? 'Goal Reached' : '+ Add Money'}</button>
+          <div class="flex gap-2">
+            ${!complete ? `<button onclick="openWithdraw('${g.id}')" class="flex-1 py-2 rounded-xl text-xs font-medium bg-gray-100 text-gray-700 btn-press">Withdraw</button>` : ''}
+            <button onclick="openContribute('${g.id}')" class="${complete ? 'w-full' : 'flex-1'} py-2 rounded-xl text-xs font-medium text-white btn-press ${complete ? 'bg-gray-300 cursor-not-allowed' : ''}" style="background:${complete ? '#d1d5db' : color}" ${complete ? 'disabled' : ''}>${complete ? 'Goal Reached' : '+ Add Money'}</button>
+          </div>
         </div>`;
       }).join('');
     }
@@ -953,6 +1065,20 @@
       g.saved = Math.min(g.target, g.saved + amt);
       await pushToCloud();
       closeModal('contributeModal');
+      e.target.reset();
+      render();
+    });
+
+    document.getElementById('withdrawForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const id = document.getElementById('withdrawGoalId').value;
+      const amt = parseFloat(document.getElementById('withdrawAmount').value);
+      const g = state.goals.find(x => x.id === id);
+      if (!g || amt <= 0) return;
+      if (amt > g.saved) { alert('Cannot withdraw more than saved!'); return; }
+      g.saved = Math.max(0, g.saved - amt);
+      await pushToCloud();
+      closeModal('withdrawModal');
       e.target.reset();
       render();
     });
