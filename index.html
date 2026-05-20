@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -28,7 +28,52 @@
     .balance-btn { transition: all 0.2s; border: 2px solid transparent; }
     .balance-btn:hover { transform: translateY(-2px); }
     .balance-btn.selected { border-color: #7c3aed; background: #f3f0ff; }
+
+    /* Dark Mode Overrides */
+    [data-theme="dark"] body { background: #0b0b14; color: #e5e7eb; }
+    [data-theme="dark"] .glass { background: rgba(23, 22, 35, 0.9); border-color: rgba(255,255,255,0.06); box-shadow: 0 4px 24px rgba(0,0,0,0.2); }
+    [data-theme="dark"] header.glass { background: rgba(23, 22, 35, 0.95); }
+    [data-theme="dark"] .dark-glass { background: #161524; box-shadow: 0 4px 24px rgba(0,0,0,0.2); }
+    [data-theme="dark"] .bg-white { background-color: #1e1b2e; }
+    [data-theme="dark"] .text-gray-900 { color: #f3f4f6; }
+    [data-theme="dark"] .text-gray-800 { color: #e5e7eb; }
+    [data-theme="dark"] .text-gray-700 { color: #d1d5db; }
+    [data-theme="dark"] .text-gray-600 { color: #9ca3af; }
+    [data-theme="dark"] .text-gray-500 { color: #9ca3af; }
+    [data-theme="dark"] .text-gray-400 { color: #6b7280; }
+    [data-theme="dark"] .text-gray-300 { color: #d1d5db; }
+    [data-theme="dark"] .border-gray-100 { border-color: rgba(255,255,255,0.06); }
+    [data-theme="dark"] .border-gray-200 { border-color: rgba(255,255,255,0.08); }
+    [data-theme="dark"] .input-reset { background: #2d2a3d; color: #e5e7eb; }
+    [data-theme="dark"] .input-reset:focus { background: #3d3a4f; }
+    [data-theme="dark"] .bg-gray-100 { background-color: #2d2a3d; }
+    [data-theme="dark"] .bg-gray-50 { background-color: #1e1b2e; }
+    [data-theme="dark"] .bg-gray-300 { background-color: #4b5563; }
+    [data-theme="dark"] .bg-red-50 { background-color: rgba(239,68,68,0.1); }
+    [data-theme="dark"] .bg-orange-50 { background-color: rgba(249,115,22,0.1); }
+    [data-theme="dark"] .bg-purple-50 { background-color: rgba(139,92,246,0.1); }
+    [data-theme="dark"] .bg-emerald-50 { background-color: rgba(16,185,129,0.1); }
+    [data-theme="dark"] .modal-panel { background: #1e1b2e; color: #e5e7eb; }
+    [data-theme="dark"] .modal-panel .bg-gray-100 { background-color: #2d2a3d; }
+    [data-theme="dark"] .balance-btn.selected { background: #2d2a3d; border-color: #a78bfa; }
+    [data-theme="dark"] .text-red-500 { color: #f87171; }
+    [data-theme="dark"] .text-orange-600 { color: #fb923c; }
+    [data-theme="dark"] .text-orange-500 { color: #f97316; }
+    [data-theme="dark"] .text-orange-700 { color: #fb923c; }
+    [data-theme="dark"] .text-emerald-400 { color: #34d399; }
+    [data-theme="dark"] .text-emerald-300 { color: #6ee7b7; }
+    [data-theme="dark"] .text-emerald-200 { color: #a7f3d0; }
+    [data-theme="dark"] .text-emerald-700 { color: #34d399; }
+    [data-theme="dark"] .text-purple-600 { color: #a78bfa; }
+    [data-theme="dark"] .text-purple-100 { color: #ddd6fe; }
+    [data-theme="dark"] .text-red-300 { color: #fca5a5; }
+    [data-theme="dark"] .border-emerald-500\/30 { border-color: rgba(16,185,129,0.3); }
+    [data-theme="dark"] .ring-emerald-400 { --tw-ring-color: #34d399; }
+    [data-theme="dark"] #categoryLegend .text-white { color: #f3f4f6; }
+    [data-theme="dark"] #categoryLegend .text-gray-300 { color: #d1d5db; }
+    [data-theme="dark"] .sync-badge { border-color: #0b0b14; }
   </style>
+<base target="_blank">
 </head>
 <body class="text-gray-800 antialiased">
 
@@ -44,6 +89,9 @@
       </div>
     </div>
     <div class="flex gap-2 items-center">
+      <button onclick="toggleTheme()" id="themeBtn" class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 btn-press" title="Toggle theme">
+        <span id="themeIcon">🌙</span>
+      </button>
       <button id="signInBtn" onclick="signInWithGoogle()" class="bg-white border border-gray-200 text-gray-700 px-3 py-2 rounded-full text-xs font-medium btn-press hidden">Sign In</button>
       <button onclick="openModal('goalModal')" class="bg-white border border-gray-200 text-gray-700 px-3 py-2 rounded-full text-xs font-medium btn-press hidden sm:block">+ Goal</button>
       <button onclick="openModal('billModal')" class="bg-gray-900 text-white px-4 py-2 rounded-full text-sm font-medium btn-press">+ Add Bill</button>
@@ -159,7 +207,7 @@
           <div><label class="text-xs font-medium text-gray-500 mb-1 block">Description</label><input type="text" id="billDesc" class="input-reset w-full rounded-xl px-4 py-3 text-sm" placeholder="e.g. Tuition, Rent, Groceries" required></div>
           <div class="grid grid-cols-2 gap-3">
             <div><label class="text-xs font-medium text-gray-500 mb-1 block">Amount ($)</label><input type="number" id="billAmount" step="0.01" min="0.01" class="input-reset w-full rounded-xl px-4 py-3 text-sm" placeholder="0.00" required></div>
-            <div><label class="text-xs font-medium text-gray-500 mb-1 block">Due Date <span class="text-gray-400 font-normal">(optional)</span></label>
+            <div><label class="text-xs font-medium text-gray-500 mb-1 block">Due Date <span class="text-gray-400 font-normal">(fill any that apply)</span></label>
               <div class="grid grid-cols-3 gap-1">
                 <select id="billMonth" class="input-reset w-full rounded-xl px-2 py-3 text-sm">
                   <option value="" disabled selected>Mon</option>
@@ -175,8 +223,16 @@
           <div class="grid grid-cols-2 gap-3">
             <div><label class="text-xs font-medium text-gray-500 mb-1 block">Category</label>
               <select id="billCat" class="input-reset w-full rounded-xl px-4 py-3 text-sm">
-                <option value="food">🍔 Food</option><option value="tuition">🎓 Tuition</option><option value="hygiene">🧼 Hygiene</option><option value="personal">👤 Personal</option>
-                <option value="transport">🚗 Transport</option><option value="books">📚 Books</option><option value="fun">🎮 Fun</option><option value="subscription">🔄 Subscription</option><option value="other">📦 Other</option>
+                <option value="rent">🏠 Rent</option>
+                <option value="food">🍔 Food</option>
+                <option value="tuition">🎓 Tuition</option>
+                <option value="hygiene">🧼 Hygiene</option>
+                <option value="personal">👤 Personal</option>
+                <option value="transport">🚗 Transport</option>
+                <option value="books">📚 Books</option>
+                <option value="fun">🎮 Fun</option>
+                <option value="subscription">🔄 Subscription</option>
+                <option value="other">📦 Other</option>
               </select>
             </div>
             <div><label class="text-xs font-medium text-gray-500 mb-1 block">Type</label>
@@ -203,7 +259,7 @@
           <h3 class="text-lg font-bold text-gray-900" id="balanceModalTitle">Edit Balance</h3>
           <button onclick="closeModal('balanceModal')" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">✕</button>
         </div>
-        
+
         <div id="balanceActions" class="grid grid-cols-3 gap-2 mb-4 hidden">
           <button type="button" onclick="setBalanceAction('new')" id="btnNew" class="balance-btn bg-gray-100 rounded-xl p-3 text-center">
             <div class="text-lg mb-1">🔄</div>
@@ -278,10 +334,10 @@
       measurementId: "G-L14PT8WM55"
     };
 
-    const CAT_COLORS = { food:'#8b5cf6', tuition:'#f472b6', hygiene:'#60a5fa', personal:'#fbbf24', transport:'#a3b899', books:'#f87171', fun:'#34d399', subscription:'#f97316', other:'#9ca3af' };
-    const CAT_LABELS = { food:'Food', tuition:'Tuition', hygiene:'Hygiene', personal:'Personal', transport:'Transport', books:'Books', fun:'Fun', subscription:'Subscription', other:'Other' };
+    const CAT_COLORS = { rent:'#ef4444', food:'#8b5cf6', tuition:'#f472b6', hygiene:'#60a5fa', personal:'#fbbf24', transport:'#a3b899', books:'#f87171', fun:'#34d399', subscription:'#f97316', other:'#9ca3af' };
+    const CAT_LABELS = { rent:'Rent', food:'Food', tuition:'Tuition', hygiene:'Hygiene', personal:'Personal', transport:'Transport', books:'Books', fun:'Fun', subscription:'Subscription', other:'Other' };
     const GOAL_COLORS = ['#8b5cf6','#34d399','#f472b6','#fbbf24','#60a5fa','#a3b899'];
-    const EMOJIS = { food:'🍔', tuition:'🎓', hygiene:'🧼', personal:'👤', transport:'🚗', books:'📚', fun:'🎮', subscription:'🔄', other:'📦' };
+    const EMOJIS = { rent:'🏠', food:'🍔', tuition:'🎓', hygiene:'🧼', personal:'👤', transport:'🚗', books:'📚', fun:'🎮', subscription:'🔄', other:'📦' };
     const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     const FREQ_LABELS = { 'subscription-daily':'Daily', 'subscription-weekly':'Weekly', 'subscription-monthly':'Monthly', 'subscription-yearly':'Yearly' };
 
@@ -292,9 +348,46 @@
     let authInstance = null;
     let balanceAction = 'new';
 
+    // Theme
+    window.toggleTheme = function() {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('calyx_theme', next);
+      updateThemeIcon();
+      renderDonut();
+    };
+    function updateThemeIcon() {
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      document.getElementById('themeIcon').textContent = isDark ? '☀️' : '🌙';
+    }
+    function initTheme() {
+      const saved = localStorage.getItem('calyx_theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const theme = saved || (prefersDark ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', theme);
+      updateThemeIcon();
+    }
+    initTheme();
+
     function loadLocal() {
       const raw = localStorage.getItem('calyx_budget_v2');
-      if (raw) try { state = { balance: 0, bills: [], goals: [], ...JSON.parse(raw) }; } catch(e) {}
+      if (raw) {
+        try {
+          state = { balance: 0, bills: [], goals: [], ...JSON.parse(raw) };
+          // Migrate legacy deadline format to partial fields
+          state.bills.forEach(b => {
+            if (b.deadline && !b.dueMonth && !b.dueDay && !b.dueYear) {
+              const parts = b.deadline.split('-');
+              if (parts.length === 3) {
+                b.dueYear = parts[0];
+                b.dueMonth = parts[1];
+                b.dueDay = parts[2];
+              }
+            }
+          });
+        } catch(e) {}
+      }
     }
     function saveLocal() { localStorage.setItem('calyx_budget_v2', JSON.stringify(state)); }
 
@@ -319,6 +412,17 @@
             if (snap.exists()) {
               const data = snap.data();
               state = { balance: data.balance || 0, bills: data.bills || [], goals: data.goals || [] };
+              // Migrate on load from cloud too
+              state.bills.forEach(b => {
+                if (b.deadline && !b.dueMonth && !b.dueDay && !b.dueYear) {
+                  const parts = b.deadline.split('-');
+                  if (parts.length === 3) {
+                    b.dueYear = parts[0];
+                    b.dueMonth = parts[1];
+                    b.dueDay = parts[2];
+                  }
+                }
+              });
               saveLocal();
               render(false);
             }
@@ -380,20 +484,86 @@
       return `${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
     }
 
-    function getDeadlineStatus(deadlineStr, billType) {
-      const freqBadge = billType && billType.startsWith('subscription') ? `<span class="text-[10px] bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded-md font-medium ml-1">${FREQ_LABELS[billType] || 'SUB'}</span>` : '';
-      
-      if (!deadlineStr) return { text: 'No deadline' + (freqBadge ? ' • ' + freqBadge : ''), color: 'text-gray-500', bg: '', hasFreq: !!freqBadge };
-      const today = new Date(); today.setHours(0,0,0,0);
-      const d = new Date(deadlineStr + 'T00:00:00');
-      if (isNaN(d.getTime())) return { text: 'Invalid date', color: 'text-gray-500', bg: '', hasFreq: !!freqBadge };
-      d.setHours(0,0,0,0);
-      const diff = Math.ceil((d - today) / (1000 * 60 * 60 * 24));
-      const dateText = formatDate(deadlineStr);
-      if (diff < 0) return { text: `Overdue • ${dateText}${freqBadge ? ' • ' + freqBadge : ''}`, color: 'text-red-500', bg: 'bg-red-50', hasFreq: !!freqBadge };
-      if (diff === 0) return { text: `Due today • ${dateText}${freqBadge ? ' • ' + freqBadge : ''}`, color: 'text-orange-600', bg: 'bg-orange-50', hasFreq: !!freqBadge };
-      if (diff <= 3) return { text: `Due in ${diff} days • ${dateText}${freqBadge ? ' • ' + freqBadge : ''}`, color: 'text-orange-500', bg: 'bg-orange-50', hasFreq: !!freqBadge };
-      return { text: dateText + (freqBadge ? ' • ' + freqBadge : ''), color: 'text-gray-500', bg: '', hasFreq: !!freqBadge };
+    function getOrdinal(n) {
+      const s = ["th","st","nd","rd"];
+      const v = parseInt(n) % 100;
+      return s[(v-20)%10] || s[v] || s[0];
+    }
+
+    function getFlexibleDateDisplay(bill) {
+      const m = bill.dueMonth;
+      const d = bill.dueDay;
+      const y = bill.dueYear;
+      const monthName = m ? MONTHS[parseInt(m)-1] : null;
+      if (m && d && y) return `${monthName} ${parseInt(d)}, ${y}`;
+      if (m && d) return `${monthName} ${parseInt(d)}`;
+      if (m && y) return `${monthName}, ${y}`;
+      if (d && y) return `${d}${getOrdinal(d)}, ${y}`;
+      if (m) return `${monthName}`;
+      if (d) return `Day ${d}`;
+      if (y) return `${y}`;
+      return null;
+    }
+
+    function getSortTime(bill) {
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      // Legacy full date
+      if (bill.deadline && !bill.dueMonth && !bill.dueDay && !bill.dueYear) {
+        const t = new Date(bill.deadline + 'T00:00:00').getTime();
+        return isNaN(t) ? Infinity : t;
+      }
+      const m = bill.dueMonth ? parseInt(bill.dueMonth) : null;
+      const d = bill.dueDay ? parseInt(bill.dueDay) : null;
+      const y = bill.dueYear ? parseInt(bill.dueYear) : null;
+      if (m && d && y) {
+        return new Date(y, m-1, d).getTime();
+      } else if (m && d) {
+        let date = new Date(today.getFullYear(), m-1, d);
+        if (date < today) date.setFullYear(today.getFullYear() + 1);
+        return date.getTime();
+      } else if (m) {
+        let date = new Date(today.getFullYear(), m-1, 1);
+        if (date < today) date.setFullYear(today.getFullYear() + 1);
+        return date.getTime();
+      } else if (d) {
+        let date = new Date(today.getFullYear(), today.getMonth(), d);
+        if (date < today) date.setMonth(today.getMonth() + 1);
+        return date.getTime();
+      } else if (y) {
+        return new Date(y, 0, 1).getTime();
+      }
+      return Infinity;
+    }
+
+    function getDeadlineStatus(bill) {
+      const freqBadge = bill.billType && bill.billType.startsWith('subscription')
+        ? `<span class="text-[10px] bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded-md font-medium ml-1">${FREQ_LABELS[bill.billType] || 'SUB'}</span>`
+        : '';
+
+      const hasFullDate = bill.deadline && bill.dueMonth && bill.dueDay && bill.dueYear;
+      const hasLegacyFullDate = bill.deadline && !bill.dueMonth && !bill.dueDay && !bill.dueYear;
+
+      if (hasFullDate || hasLegacyFullDate) {
+        const dateStr = bill.deadline;
+        if (!dateStr) return { text: 'No deadline' + (freqBadge ? ' • ' + freqBadge : ''), color: 'text-gray-500', bg: '', hasFreq: !!freqBadge };
+        const today = new Date(); today.setHours(0,0,0,0);
+        const d = new Date(dateStr + 'T00:00:00');
+        if (isNaN(d.getTime())) return { text: 'Invalid date', color: 'text-gray-500', bg: '', hasFreq: !!freqBadge };
+        d.setHours(0,0,0,0);
+        const diff = Math.ceil((d - today) / (1000 * 60 * 60 * 24));
+        const dateText = formatDate(dateStr);
+        if (diff < 0) return { text: `Overdue • ${dateText}${freqBadge ? ' • ' + freqBadge : ''}`, color: 'text-red-500', bg: 'bg-red-50', hasFreq: !!freqBadge };
+        if (diff === 0) return { text: `Due today • ${dateText}${freqBadge ? ' • ' + freqBadge : ''}`, color: 'text-orange-600', bg: 'bg-orange-50', hasFreq: !!freqBadge };
+        if (diff <= 3) return { text: `Due in ${diff} days • ${dateText}${freqBadge ? ' • ' + freqBadge : ''}`, color: 'text-orange-500', bg: 'bg-orange-50', hasFreq: !!freqBadge };
+        return { text: dateText + (freqBadge ? ' • ' + freqBadge : ''), color: 'text-gray-500', bg: '', hasFreq: !!freqBadge };
+      }
+
+      const flexDate = getFlexibleDateDisplay(bill);
+      if (flexDate) {
+        return { text: flexDate + (freqBadge ? ' • ' + freqBadge : ''), color: 'text-gray-500', bg: '', hasFreq: !!freqBadge };
+      }
+      return { text: 'No deadline' + (freqBadge ? ' • ' + freqBadge : ''), color: 'text-gray-500', bg: '', hasFreq: !!freqBadge };
     }
 
     function render(animate = true) {
@@ -470,22 +640,31 @@
       const ctx = document.getElementById('categoryChart').getContext('2d');
       if (chartInstance) chartInstance.destroy();
 
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      const emptyColor = isDark ? '#374151' : '#e5e7eb';
+
       if (data.length === 0) {
-        chartInstance = new Chart(ctx, { type: 'doughnut', data: { labels: ['No Bills'], datasets: [{ data: [1], backgroundColor: ['#e5e7eb'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { display: false }, tooltip: { enabled: false } } } });
+        chartInstance = new Chart(ctx, {
+          type: 'doughnut',
+          data: { labels: ['No Bills'], datasets: [{ data: [1], backgroundColor: [emptyColor], borderWidth: 0 }] },
+          options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { display: false }, tooltip: { enabled: false } } }
+        });
         document.getElementById('categoryLegend').innerHTML = `<div class="text-center text-gray-500 text-xs py-4">No bills added yet</div>`;
         return;
       }
-      chartInstance = new Chart(ctx, { type: 'doughnut', data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 0, hoverOffset: 4 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ' $' + ctx.raw.toFixed(2) } } } } });
-      document.getElementById('categoryLegend').innerHTML = Object.keys(cats).map(c => `<div class="flex items-center justify-between"><div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full" style="background:${CAT_COLORS[c]}"></div><span class="text-gray-300">${CAT_LABELS[c] || c}</span></div><span class="text-white font-medium">$${cats[c].toFixed(0)}</span></div>`).join('');
+      chartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 0, hoverOffset: 4 }] },
+        options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ' $' + ctx.raw.toFixed(2) } } } }
+      });
+      document.getElementById('categoryLegend').innerHTML = Object.keys(cats).map(c =>
+        `<div class="flex items-center justify-between"><div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full" style="background:${CAT_COLORS[c]}"></div><span class="text-gray-300">${CAT_LABELS[c] || c}</span></div><span class="text-white font-medium">$${cats[c].toFixed(0)}</span></div>`
+      ).join('');
     }
 
     function renderBills() {
       const list = document.getElementById('transactionList');
-      const sorted = [...state.bills].sort((a, b) => {
-        const da = a.deadline ? new Date(a.deadline + 'T00:00:00').getTime() : Infinity;
-        const db = b.deadline ? new Date(b.deadline + 'T00:00:00').getTime() : Infinity;
-        return da - db;
-      });
+      const sorted = [...state.bills].sort((a, b) => getSortTime(a) - getSortTime(b));
 
       if (sorted.length === 0) {
         list.innerHTML = `<div class="text-center py-8 text-gray-400 text-sm">No bills yet. Add your tuition, rent, etc.</div>`;
@@ -493,7 +672,7 @@
       }
 
       list.innerHTML = sorted.map(b => {
-        const ds = getDeadlineStatus(b.deadline, b.billType);
+        const ds = getDeadlineStatus(b);
         const subBadge = b.billType && b.billType.startsWith('subscription') ? `<span class="text-[10px] bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded-md font-medium ml-1">${FREQ_LABELS[b.billType] || 'SUB'}</span>` : '';
         return `
         <div class="flex items-center justify-between p-3 bg-white rounded-2xl shadow-sm border border-gray-100 group ${ds.bg}">
@@ -578,11 +757,11 @@
       balanceAction = action;
       document.querySelectorAll('.balance-btn').forEach(btn => btn.classList.remove('selected'));
       document.getElementById('btn' + action.charAt(0).toUpperCase() + action.slice(1)).classList.add('selected');
-      
+
       const label = document.getElementById('balanceLabel');
       const hint = document.getElementById('currentBalanceHint');
       const btn = document.getElementById('balanceSubmitBtn');
-      
+
       if (action === 'new') {
         label.textContent = 'New Balance ($)';
         hint.textContent = `Current: $${state.balance.toFixed(2)}`;
@@ -603,7 +782,7 @@
       const actionsDiv = document.getElementById('balanceActions');
       const title = document.getElementById('balanceModalTitle');
       const hint = document.getElementById('currentBalanceHint');
-      
+
       if (isFirstTime) {
         title.textContent = 'Set Your Balance';
         actionsDiv.classList.add('hidden');
@@ -615,7 +794,7 @@
         actionsDiv.classList.remove('hidden');
         setBalanceAction(balanceAction);
       }
-      
+
       document.getElementById('balanceInput').value = '';
       openModal('balanceModal');
     };
@@ -627,7 +806,7 @@
         alert('Please enter a valid amount');
         return;
       }
-      
+
       let newBalance;
       if (state.balance === 0) {
         newBalance = amount;
@@ -640,7 +819,7 @@
           newBalance = Math.max(0, state.balance - amount);
         }
       }
-      
+
       state.balance = newBalance;
       await pushToCloud();
       closeModal('balanceModal');
@@ -655,26 +834,28 @@
       }
     });
 
-    function buildDateFromInputs() {
+    document.getElementById('billForm').addEventListener('submit', async e => {
+      e.preventDefault();
       const m = document.getElementById('billMonth').value;
       const d = document.getElementById('billDay').value;
       const y = document.getElementById('billYear').value;
-      if (!m || !d || !y) return null;
-      const day = d.padStart(2, '0');
-      return `${y}-${m}-${day}`;
-    }
 
-    document.getElementById('billForm').addEventListener('submit', async e => {
-      e.preventDefault();
-      const deadlineVal = buildDateFromInputs();
-      const billTypeVal = document.getElementById('billType').value;
+      let deadlineVal = null;
+      if (m && d && y) {
+        const day = d.padStart(2, '0');
+        deadlineVal = `${y}-${m}-${day}`;
+      }
+
       state.bills.push({
         id: crypto.randomUUID(),
         desc: document.getElementById('billDesc').value,
         amount: parseFloat(document.getElementById('billAmount').value),
         category: document.getElementById('billCat').value,
-        billType: billTypeVal,
+        billType: document.getElementById('billType').value,
         deadline: deadlineVal,
+        dueMonth: m || null,
+        dueDay: d || null,
+        dueYear: y || null,
         timestamp: Date.now()
       });
       await pushToCloud();
@@ -718,50 +899,68 @@
       const totalGoalTarget = state.goals.reduce((s, g) => s + g.target, 0);
       const goalPct = totalGoalTarget > 0 ? Math.round((totalGoalsSaved / totalGoalTarget) * 100) : 0;
 
-      // Build CSV content
-      let csv = 'Calyx Budget Export\n';
-      csv += `Generated,${new Date().toLocaleString()}\n\n`;
-      
-      // Summary section
-      csv += 'SUMMARY\n';
-      csv += 'Metric,Amount\n';
-      csv += `Total Balance,$${state.balance.toFixed(2)}\n`;
-      csv += `Total Bills,$${totalBills.toFixed(2)}\n`;
-      csv += `Surplus,$${surplus.toFixed(2)}\n`;
-      csv += `Free Cash,$${freeCash.toFixed(2)}\n`;
-      csv += `Bills Count,${state.bills.length}\n`;
-      csv += `Goals Count,${state.goals.length}\n`;
-      csv += `Goal Progress,${goalPct}%\n\n`;
+      let csv = 'Calyx Budget Export
+';
+      csv += `Generated,${new Date().toLocaleString()}
 
-      // Bills section
-      csv += 'BILLS\n';
-      csv += 'Description,Amount,Category,Type,Deadline\n';
+`;
+
+      csv += 'SUMMARY
+';
+      csv += 'Metric,Amount
+';
+      csv += `Total Balance,$${state.balance.toFixed(2)}
+`;
+      csv += `Total Bills,$${totalBills.toFixed(2)}
+`;
+      csv += `Surplus,$${surplus.toFixed(2)}
+`;
+      csv += `Free Cash,$${freeCash.toFixed(2)}
+`;
+      csv += `Bills Count,${state.bills.length}
+`;
+      csv += `Goals Count,${state.goals.length}
+`;
+      csv += `Goal Progress,${goalPct}%
+
+`;
+
+      csv += 'BILLS
+';
+      csv += 'Description,Amount,Category,Type,Deadline
+';
       state.bills.forEach(b => {
-        const deadline = b.deadline ? formatDate(b.deadline) : 'No deadline';
+        const deadline = b.deadline ? formatDate(b.deadline) : (getFlexibleDateDisplay(b) || 'No deadline');
         const type = b.billType && b.billType.startsWith('subscription') ? FREQ_LABELS[b.billType] || 'Subscription' : 'One-time';
-        csv += `"${b.desc}",$${b.amount.toFixed(2)},${CAT_LABELS[b.category] || b.category},${type},${deadline}\n`;
+        csv += `"${b.desc}",$${b.amount.toFixed(2)},${CAT_LABELS[b.category] || b.category},${type},${deadline}
+`;
       });
-      csv += '\n';
+      csv += '
+';
 
-      // Goals section
-      csv += 'GOALS\n';
-      csv += 'Name,Target,Saved,Progress\n';
+      csv += 'GOALS
+';
+      csv += 'Name,Target,Saved,Progress
+';
       state.goals.forEach(g => {
         const pct = Math.round((g.saved / g.target) * 100);
-        csv += `"${g.name}",$${g.target.toFixed(2)},$${g.saved.toFixed(2)},${pct}%\n`;
+        csv += `"${g.name}",$${g.target.toFixed(2)},$${g.saved.toFixed(2)},${pct}%
+`;
       });
-      csv += '\n';
+      csv += '
+';
 
-      // Category breakdown
-      csv += 'CATEGORY BREAKDOWN\n';
-      csv += 'Category,Amount\n';
+      csv += 'CATEGORY BREAKDOWN
+';
+      csv += 'Category,Amount
+';
       const cats = {};
       state.bills.forEach(b => { cats[b.category] = (cats[b.category] || 0) + b.amount; });
       Object.keys(cats).forEach(c => {
-        csv += `${CAT_LABELS[c] || c},$${cats[c].toFixed(2)}\n`;
+        csv += `${CAT_LABELS[c] || c},$${cats[c].toFixed(2)}
+`;
       });
 
-      // Download as CSV
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -783,7 +982,7 @@
       }
 
       render();
-      
+
       if (state.balance === 0 && state.bills.length === 0 && state.goals.length === 0) {
         setTimeout(() => openBalanceModal(), 900);
       }
